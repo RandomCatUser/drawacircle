@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Draw a Perfect Circle Challenge</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+
+    canvas {
+      border: 2px solid #333;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      cursor: crosshair;
+    }
+
+    #score {
+      margin-top: 15px;
+      font-size: 1.5em;
+      color: #222;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌀 Draw a Perfect Circle</h1>
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <div id="score">Draw with your mouse</div>
+  <button onclick="clearCanvas()">Try Again</button>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let drawing = false;
+    let points = [];
+
+    canvas.addEventListener("mousedown", () => {
+      drawing = true;
+      points = [];
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      drawing = false;
+      evaluateDrawing();
+    });
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (!drawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      points.push({ x, y });
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#333";
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    });
+
+    function evaluateDrawing() {
+      if (points.length < 10) {
+        document.getElementById("score").textContent = "Too short! Try again.";
+        return;
+      }
+
+      // 1. Find centroid
+      let sumX = 0, sumY = 0;
+      points.forEach(p => {
+        sumX += p.x;
+        sumY += p.y;
+      });
+      const cx = sumX / points.length;
+      const cy = sumY / points.length;
+
+      // 2. Measure average radius
+      let distances = points.map(p => Math.hypot(p.x - cx, p.y - cy));
+      const avgRadius = distances.reduce((a, b) => a + b) / distances.length;
+
+      // 3. Measure deviation from perfect circle
+      let deviation = distances.map(d => Math.abs(d - avgRadius));
+      const avgDeviation = deviation.reduce((a, b) => a + b) / deviation.length;
+
+      // 4. Scoring
+      const score = Math.max(0, Math.round(100 - avgDeviation));
+      let message = "";
+
+      if (score > 90) message = "🎉 Perfect!";
+      else if (score > 75) message = "😄 Pretty good!";
+      else if (score > 50) message = "🙂 Not bad!";
+      else message = "😅 Try again!";
+
+      document.getElementById("score").textContent = `${message} Your score: ${score}/100`;
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      document.getElementById("score").textContent = "Draw with your mouse";
+    }
+  </script>
+
+</body>
+</html>
