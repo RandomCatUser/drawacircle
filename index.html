@@ -2,52 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Draw a Perfect Circle Challenge</title>
+  <title>Perfect Circle Challenge</title>
   <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+
     body {
-      font-family: sans-serif;
-      text-align: center;
-      background: #f0f0f0;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      background: linear-gradient(135deg, #89f7fe, #66a6ff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 600px;
+      width: 90%;
+    }
+
+    h1 {
+      color: #fff;
+      margin-bottom: 10px;
+      font-size: 2rem;
     }
 
     canvas {
-      border: 2px solid #333;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      border: 3px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      background: white;
       cursor: crosshair;
+      margin-top: 20px;
     }
 
     #score {
-      margin-top: 15px;
-      font-size: 1.5em;
-      color: #222;
+      margin-top: 20px;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #fff;
+      transition: all 0.4s ease;
     }
 
+    .perfect { color: #00ff94; }
+    .good { color: #ffe600; }
+    .try { color: #ff3b3b; }
+
     button {
-      margin-top: 15px;
-      padding: 10px 20px;
-      font-size: 16px;
+      margin-top: 20px;
+      padding: 10px 25px;
+      font-size: 1rem;
+      font-weight: bold;
       border: none;
-      background: #007bff;
-      color: white;
-      border-radius: 5px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.3);
+      color: #fff;
       cursor: pointer;
+      transition: 0.3s;
     }
 
     button:hover {
-      background: #0056b3;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    @media (max-width: 500px) {
+      canvas {
+        width: 300px;
+        height: 300px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <h1>🌀 Draw a Perfect Circle</h1>
-  <canvas id="canvas" width="500" height="500"></canvas>
-  <div id="score">Draw with your mouse</div>
-  <button onclick="clearCanvas()">Try Again</button>
+  <div class="container">
+    <h1>🎯 Draw a Perfect Circle</h1>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <div id="score">Press and drag to draw</div>
+    <button onclick="clearCanvas()">Try Again</button>
+  </div>
 
   <script>
     const canvas = document.getElementById("canvas");
@@ -58,6 +101,7 @@
     canvas.addEventListener("mousedown", () => {
       drawing = true;
       points = [];
+      ctx.beginPath();
     });
 
     canvas.addEventListener("mouseup", () => {
@@ -73,18 +117,18 @@
       points.push({ x, y });
 
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "#333";
+      ctx.strokeStyle = "#444";
       ctx.lineTo(x, y);
       ctx.stroke();
     });
 
     function evaluateDrawing() {
       if (points.length < 10) {
-        document.getElementById("score").textContent = "Too short! Try again.";
+        setScore("Too short! Try again.", "try");
         return;
       }
 
-      // 1. Find centroid
+      // Find center
       let sumX = 0, sumY = 0;
       points.forEach(p => {
         sumX += p.x;
@@ -93,30 +137,31 @@
       const cx = sumX / points.length;
       const cy = sumY / points.length;
 
-      // 2. Measure average radius
-      let distances = points.map(p => Math.hypot(p.x - cx, p.y - cy));
-      const avgRadius = distances.reduce((a, b) => a + b) / distances.length;
-
-      // 3. Measure deviation from perfect circle
-      let deviation = distances.map(d => Math.abs(d - avgRadius));
+      // Measure radii from center
+      const radii = points.map(p => Math.hypot(p.x - cx, p.y - cy));
+      const avgRadius = radii.reduce((a, b) => a + b) / radii.length;
+      const deviation = radii.map(r => Math.abs(r - avgRadius));
       const avgDeviation = deviation.reduce((a, b) => a + b) / deviation.length;
 
-      // 4. Scoring
-      const score = Math.max(0, Math.round(100 - avgDeviation));
-      let message = "";
+      const deviationPercent = (avgDeviation / avgRadius) * 100;
+      const score = Math.max(0, Math.round(100 - deviationPercent * 2));
 
-      if (score > 90) message = "🎉 Perfect!";
-      else if (score > 75) message = "😄 Pretty good!";
-      else if (score > 50) message = "🙂 Not bad!";
-      else message = "😅 Try again!";
+      if (score >= 90) setScore(`🎉 Perfect! Score: ${score}`, "perfect");
+      else if (score >= 70) setScore(`😄 Good job! Score: ${score}`, "good");
+      else setScore(`😅 Try again! Score: ${score}`, "try");
+    }
 
-      document.getElementById("score").textContent = `${message} Your score: ${score}/100`;
+    function setScore(text, cls) {
+      const scoreDiv = document.getElementById("score");
+      scoreDiv.className = "";
+      scoreDiv.textContent = text;
+      scoreDiv.classList.add(cls);
     }
 
     function clearCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.beginPath();
-      document.getElementById("score").textContent = "Draw with your mouse";
+      setScore("Press and drag to draw", "");
     }
   </script>
 
