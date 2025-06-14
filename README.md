@@ -3,7 +3,6 @@
 A fun and interactive browser game that challenges you to draw a perfect circle freehand using your mouse! 🖱️
 
 🔗 **Live Demo:** [circle-challenge_sever](https://randomcatuser.github.io/drawacircle/)  
-_(Replace this with your actual hosted URL)_
 
 ## 🚀 Features
 
